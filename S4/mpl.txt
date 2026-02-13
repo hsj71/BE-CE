@@ -1,0 +1,1051 @@
+///////////////////////////         assignment::::::::::1::::::::::::::::::  //////////////////////////////
+
+section .data
+msg db 'Hello, world!',0xa 
+len equ $ - msg
+section .text 
+global start
+_start:
+mov eax,4
+mov ebx,1
+mov ecx,msg
+mov edx,len 
+int 80h
+mov eax,1 
+mov ebx,0 
+int 80h
+
+//////////////////””””””””””””””””2””””””””””””””/////////////////////////
+
+section .data
+msg1 db 10,13,"Enter 5 64 bit numbers" 
+len1 equ $-msg1 
+msg2 db 10,13,"Entered 5 64 bit numbers" 
+len2 equ $-msg2
+section .bss 
+array resd 200
+counter resb 1 
+section .text
+global _start
+_start: ;display 
+mov Rax,1 
+mov Rdi,1
+mov Rsi,msg1 
+mov Rdx,len1
+syscall ;accept
+mov byte[counter],05 
+mov rbx,00
+loop1:
+mov rax,0 ; 0 for read
+mov rdi,0 ; 0 for keyboard
+mov rsi, array ;move pointer to start of array add rsi,rbx
+mov rdx,17 
+syscall
+add rbx,17 ;to move counter
+dec byte[counter] JNZ 
+loop1 ;display 
+mov Rax,1 
+mov Rdi,1
+mov Rsi,msg2 
+mov Rdx,len2 
+syscall ;display
+mov byte[counter],05 
+mov rbx,00
+loop2:
+mov rax,1 ;1 for write
+mov rdi, 1 ;1 for monitor 
+mov rsi, array 
+add rsi,rbx
+mov rdx,17 ;16 bit +1 for enter 
+syscall
+add rbx,17 
+dec byte[counter]
+JNZ loop2 ;exit system call 
+mov rax ,60 
+mov rdi,0 
+syscall ;
+
+///////////////////////”””””””””””””””””””””3””””””””””””””””””””””””””/////////////////////////
+
+%macro disp 2
+mov rax ,1
+mov rdi,1 
+mov rsi,%1
+mov rdx,%2
+syscall
+%endmacro
+section .data
+msg1 db "Enter your string:",0Ah
+msglen equ $-msg1
+section .bss
+str1 resb 200
+result resb 16
+section .text
+global _start
+_start:
+mov rax,1
+mov rdi,1
+mov rsi,msg1
+mov rdx,msglen
+syscall
+mov rax,0
+mov rdi,0
+mov rdi,0
+mov rsi,str1
+mov rdx,200
+syscall
+dec rax
+mov rbx,rax
+call display
+mov rax,60
+mov rdi,0
+syscall
+display:
+mov rdi,result
+mov cx,16
+up1
+rol rbx,04
+mov al,bl
+and al,0fh
+cmp al,09h
+jg add_37
+add al,30h
+jmp skip
+add_37:
+add al,37h
+skip:
+mov[rdi],al
+inc rdi
+dec cx
+jnz up1
+disp result,16
+ret
+
+///////////////////////////////////””””””””””””””””””4””””””””””””””””””””///////////////////
+
+section .data
+array db 11h, 55h, 33h, 22h,44h
+msg1 db 10,13,"Largest no in an array is:"
+len1 equ $-msg1
+section .bss
+cnt resb 1
+result resb 16
+section .text
+global _start
+_start:
+mov byte[cnt],5
+mov rsi,array
+mov al,0
+LP: cmp al,[rsi]
+jg skip
+xchg al ,[rsi]
+skip: inc rsi
+dec byte[cnt]
+jnz LP
+;display
+mov Rax,1
+mov Rdi,1
+mov Rsi,msg1
+mov Rdx,len1
+syscall
+;display al
+call display
+;exit system call
+mov Rax ,60
+mov Rdi,0
+syscall
+%macro dispmsg 2
+mov Rax,1
+mov Rdi,1
+mov rsi,%1
+mov rdx,%2
+  syscall
+ %endmacro
+ display:
+  mov rbx,rax                      ; store no in rbx
+  mov rdi,result                   ;point rdi to result variable 
+  mov cx,16                        ;load count of rotation in cl  
+  up1: 
+   rol rbx,04               ;rotate no of left by four bits
+   mov al,bl          ; move lower byte in dl  
+   and al,0fh               ;get only LSB
+   cmp al,09h               ;compare with 39h
+   jg add_37                ;if greater than 39h skip add 37    
+   add al,30h                
+   jmp skip1                 ;else add 30     
+  add_37: 
+   add al,37h                 
+  skip1: 
+   mov [rdi],al             ;store ascii code in result variable
+   inc rdi                  ; point to next byte
+   dec cx                   ; decrement counter
+   jnz up1                  ; if not zero jump to repeat
+   dispmsg result,16        ;call to macro
+ ret
+-----------------------------------
+Output:
+Largest no in an array is:000000000000001C
+
+/////////////////////////////”””””””””””””””””5””””””””””””””/////////////////////
+
+section .data
+msg1 db "Count of Positive numbers:"
+len1 equ $-msg1
+msg2 db "Count of negative numbers:"
+len2 equ $-msg2
+array db 10,12,-21,-12,-19,-34,41
+%macro print 2
+mov rax,01
+mov rdi,01
+mov rsi,%1
+mov rdx,%2
+syscall
+%endmacro
+section .bss
+count resb 2
+pcount resb 2
+ncount resb 2
+totalcount resb 2
+section .text
+global _start
+_start:
+mov byte[count],07
+mov byte[pcount],00
+mov byte[ncount],00
+mov rsi,array
+Up:
+        mov al,00
+        add al,[rsi]
+        js neg
+        inc byte[pcount]
+        jmp Down
+        neg:
+        inc byte[ncount]
+Down:
+add rsi,01
+dec byte[count]
+jnz Up
+mov bl,[pcount]
+mov dl,[ncount]
+b1:
+print msg1,len1
+mov bh,[pcount]
+call disp
+print msg2,len2
+mov bh,[ncount]
+call disp
+mov rax,60
+mov rdi,00
+syscall
+disp:
+mov byte[count],02
+loop:
+        rol bh,04
+        mov al,bh
+        AND al,0FH
+        cmp al,09
+        jbe l1
+        add al,07h
+        l1:add al,30h
+        mov[totalcount],al
+        print totalcount,02
+        dec byte[count]
+        jnz loop
+ret
+
+/////////////////////””””””””””””””””””6”””””””””””””””//////////////////////////////
+
+%macro scall 4
+mov rax,%1
+mov rdi,%2
+mov rsi,%3
+mov rdx,%4
+syscall
+%endmacro
+Section .data
+title: db 0x0A,"----Assignment 6-----", 0x0A
+title_len: equ $-title
+regmsg: db 0x0A,"***** REGISTER CONTENTS *****"
+regmsg_len: equ $-regmsg
+gmsg: db 0x0A,"Contents of GDTR : "
+gmsg_len: equ $-gmsg
+lmsg: db 0x0A,"Contents of LDTR : "
+lmsg_len: equ $-lmsg
+imsg: db 0x0A,"Contents of IDTR : "
+imsg_len: equ $-imsg
+tmsg: db 0x0A,"Contents of TR : "
+tmsg_len: equ $-tmsg
+mmsg: db 0x0A,"Contents of MSW : "
+mmsg_len: equ $-mmsg
+realmsg: db "---- In Real mode. ----"
+realmsg_len: equ $-realmsg
+protmsg: db "---- In Protected Mode. ----"
+protmsg_len: equ $-protmsg
+cnt2:db 04H
+newline: db 0x0A
+Section .bss
+g: resd 1
+resw 1
+l: resw 1
+idtr: resd 1
+resw 1
+msw: resd 1
+tr: resw 1
+value :resb 4
+Section .text
+global _start
+_start:
+scall 1,1,title,title_len
+smsw [msw]
+mov eax,dword[msw]
+bt eax,0
+jc next
+scall 1,1,realmsg,realmsg_len
+jmp EXIT
+next:
+scall 1,1,protmsg,protmsg_len
+scall 1,1, regmsg,regmsg_len
+;printing register contents
+scall 1,1,gmsg,gmsg_len
+SGDT [g]
+mov bx, word[g+4]
+call HtoA
+mov bx,word[g+2]
+call HtoA
+mov bx, word[g]
+call HtoA--- LDTR CONTENTS---- find valid values for all labels after 1001 passes, giving up.
+scall 1,1, lmsg,lmsg_len
+SLDT [l]
+mov bx,word[l]
+call HtoA---- IDTR Contents ------
+scall 1,1,imsg,imsg_len
+SIDT [idtr]
+mov bx, word[idtr+4]
+call HtoA
+mov bx,word[idtr+2]
+call HtoA
+mov bx, word[idtr]
+call HtoA
+;---- Task Register Contents -0----
+scall 1,1, tmsg,tmsg_len
+mov bx,word[tr]
+call HtoA
+;------- Content of MSW --------
+scall 1,1,mmsg,mmsg_len
+mov bx, word[msw+2]
+call HtoA
+mov bx, word[msw]
+call HtoA
+scall 1,1,newline,1
+EXIT:
+mov rax,60
+mov rdi,0
+syscall
+;------HEX TO ASCII CONVERSION METHOD ---------------
+HtoA: ;hex_no to be converted is in bx //result is stored in rdi/user defined variable
+mov rdi,value
+mov byte[cnt2],4H
+aup:
+rol bx,04
+mov cl,bl
+and cl,0FH
+cmp cl,09H
+jbe ANEXT
+ADD cl,07H
+ANEXT: 
+add cl, 30H
+mov byte[rdi],cl
+INC rdi
+dec byte[cnt2]
+JNZ aup
+scall 1,1,value,4
+ret
+
+////////////////////”””””””””””””””7”””””””””””””””””””//////////////////
+
+%macro scall 4 ;macro to take input and output
+mov rax,%1
+mov rdi,%2
+mov rsi,%3
+mov rdx,%4
+syscall
+%endmacro
+Section .data
+title: db 0x0A,"------- BLock Transfer -----------",0x0A
+db "Non Overlapped without string", 0x0A
+t_len: equ $-title
+copy: db 0x0A,0x0A," Copied data",
+copy_len: equ $-copy
+newline: db 0x0A
+colon:db " : "
+colon_len: equ $-colon
+cnt_a: db 05H
+cnt_a2:db 05H
+cnt :db 05H
+cnt2:db 05H
+array: db 10H,20H,30H,40H,50H;data to be transferred
+;------------- BSS Section -------------------------
+Section .bss
+address: resb 16
+val: resb 2
+copied: resb 5
+choice: resb 2
+;------------- MAIN CODE Section -------------------------
+Section .text
+global _start
+_start:
+scall 1,1,title,t_len
+scall 0,0,choice,2 ;read choice
+cmp byte[choice],'5' ;if choice==5 then exit
+je EXIT
+;------------- Print Source Array ADDRESS: VALUE --------------
+mov byte[cnt_a],05h
+mov rsi,array
+label1:
+push rsi
+mov rbx,rsi
+mov rdi,address
+call HtoA_address
+scall 1,1,newline,1
+scall 1,1,address,16
+scall 1,1,colon,colon_len
+pop rsi
+mov bl,byte[rsi]
+push rsi
+mov rdi,val
+call HtoA_value
+scall 1,1,val,2
+pop rsi
+inc rsi
+dec byte[cnt_a]
+jnz label1
+;------------- CHOOSE OPTION -------------------------
+;compare choice here
+cmp byte[choice],'1' 
+JE NONOVERLAPPED
+;------Non overlapped copying without string instruction-----
+NONOVERLAPPED:
+;---- Initializaion of starting addresses
+mov byte[cnt_a2],5H
+mov rsi,array
+mov rdi,array+20H
+label2:
+mov cl,00H
+mov cl,byte[rsi]
+mov byte[rdi],cl
+inc rsi
+inc rdi
+dec byte[cnt_a2]
+jnz label2
+jmp OUTPUT
+;------OUTPUT of Non-Overlapped ---------------
+OUTPUT:
+scall 1,1,copy,copy_len
+mov byte[cnt_a],05H
+mov rsi,array+20H
+jmp label3
+;------Printig ADDRESS:VALUE OF COPIED DATA ---------------
+label3:
+push rsi
+mov rbx,rsi
+mov rdi,address
+call HtoA_address
+scall 1,1,newline,1
+scall 1,1,address,16
+scall 1,1,colon,colon_len
+pop rsi
+mov bl,byte[rsi]
+push rsi
+mov rdi,val
+call HtoA_value
+scall 1,1,val,2
+pop rsi
+inc rsi
+dec byte[cnt_a]
+jnz label3
+;jmp to start of program
+jmp _start
+EXIT:
+mov rax,60
+mov rdi,0
+syscall
+;------HEX TO ASCII CONVERSION METHOD FOR ADDRESS ---------------
+HtoA_address: ;hex_no to be converted is in ebx //result is stored in rdi/user defined variable
+mov byte[cnt2],10H
+aup:
+rol rbx,04
+mov cl,bl
+and cl,0FH
+cmp cl,09H
+jbe ANEXT
+ADD cl,07H
+ANEXT: 
+add cl, 30H
+mov byte[rdi],cl
+INC rdi
+dec byte[cnt2]
+JNZ aup
+ret
+;------HEX TO ASCII CONVERSION METHOD FOR VALUE(2 DIGIT) ---------------
+HtoA_value: ;hex_no to be converted is in ebx //result is stored in rdi/user defined variable
+mov byte[cnt2],02H
+aup1:
+rol bl,04
+mov cl,bl
+and cl,0FH
+CMP CL,09H
+jbe ANEXT1
+ADD cl,07H
+ANEXT1: 
+add cl, 30H
+mov byte[rdi],cl
+INC rdi
+dec byte[cnt2]
+JNZ aup1
+Ret
+
+///////////////////””””””””””””””””8”””””””””””””””///////////////////
+
+%macro scall 4 ;macro to take input and output
+mov rax,%1
+mov rdi,%2
+mov rsi,%3
+mov rdx,%4
+syscall
+%endmacro
+Section .data
+title: db 0x0A,"------- BLock Transfer -----------",0x0A
+db " Overlapped with String Instruction",0x0A
+t_len: equ $-title
+copy: db 0x0A,0x0A," Copied data",
+copy_len: equ $-copy
+newline: db 0x0A
+colon:db " : "
+colon_len: equ $-colon
+cnt_a: db 05H
+cnt_a2:db 05H
+cnt :db 05H
+cnt2:db 05H
+array: db 10H,20H,30H,40H,50H;data to be transferred
+;------------- BSS Section -------------------------
+Section .bss
+address: resb 16
+val: resb 2
+copied: resb 5
+choice: resb 2
+;------------- MAIN CODE Section -------------------------
+Section .text
+global _start
+_start:
+scall 1,1,title,t_len
+scall 0,0,choice,2 ;read choice
+cmp byte[choice],'5' ;if choice==5 then exit
+je EXIT
+;------------- Print Source Array ADDRESS: VALUE --------------
+mov byte[cnt_a],05h
+mov rsi,array
+label1:
+push rsi
+mov rbx,rsi
+mov rdi,address
+call HtoA_address
+scall 1,1,newline,1
+scall 1,1,address,16
+scall 1,1,colon,colon_len
+pop rsi
+mov bl,byte[rsi]
+push rsi
+mov rdi,val
+call HtoA_value
+scall 1,1,val,2
+pop rsi
+inc rsi
+dec byte[cnt_a]
+jnz label1
+;------------- CHOOSE OPTION -------------------------
+;compare choice here
+cmp byte[choice],'4'
+je OVERLAPPED_STR
+;------overlapped with string instruction---------------
+OVERLAPPED_STR:
+mov byte[cnt_a2],05H
+mov rsi,array+04H
+mov rdi,array+07H
+STD
+label6:
+MOVSB 
+dec byte[cnt_a2]
+jnz label6
+jmp OUTPUT1
+;------OUTPUT of Overlapped ---------------
+OUTPUT1:
+mov cl,byte[array+4H]
+mov byte[array+7H],cl
+scall 1,1,copy,copy_len
+mov byte[cnt_a],08H
+mov rsi,array
+;------Printig ADDRESS:VALUE OF COPIED DATA ---------------
+label3:
+push rsi
+mov rbx,rsi
+mov rdi,address
+call HtoA_address
+scall 1,1,newline,1
+scall 1,1,address,16
+scall 1,1,colon,colon_len
+pop rsi
+mov bl,byte[rsi]
+push rsi
+mov rdi,val
+call HtoA_value
+scall 1,1,val,2
+pop rsi
+inc rsi
+dec byte[cnt_a]
+jnz label3
+;jmp to start of program
+jmp _start
+EXIT:
+mov rax,60
+mov rdi,0
+syscall
+;------HEX TO ASCII CONVERSION METHOD FOR ADDRESS ---------------
+HtoA_address: ;hex_no to be converted is in ebx //result is stored in rdi/user defined variable
+mov byte[cnt2],10H
+aup:
+rol rbx,04
+mov cl,bl
+and cl,0FH
+cmp cl,09H
+jbe ANEXT
+ADD cl,07H
+ANEXT: 
+add cl, 30H
+mov byte[rdi],cl
+INC rdi
+dec byte[cnt2]
+JNZ aup
+ret------HEX TO ASCII CONVERSION METHOD FOR VALUE(2 DIGIT) ---------------
+HtoA_value: ;hex_no to be converted is in ebx //result is stored in rdi/user defined variable
+mov byte[cnt2],02H
+aup1:
+rol bl,04
+mov cl,bl
+and cl,0FH
+CMP CL,09H
+jbe ANEXT1
+ADD cl,07H
+ANEXT1: 
+add cl, 30H
+mov byte[rdi],cl
+INC rdi
+dec byte[cnt2]
+JNZ aup1
+Ret
+
+//////////////”””””””””””””””””9””””””””””””””////////////////
+
+global _start
+_start:
+section .text
+%macro accept 2
+mov rax,0
+mov rdi,0
+mov rsi,%1
+mov rdx,%2
+syscall
+%endmacro
+%macro disp 2
+mov rax,1
+mov rdi,1
+mov rsi,%1
+mov rdx,%2
+syscall
+%endmacro
+menu_label:
+disp menu,menulen
+disp cho,lenc
+accept choice,02
+mov al,byte[choice]
+cmp al,31h
+je successive_add
+cmp al,32h
+je add_shift
+cmp al,33h
+je exit
+successive_add:
+disp msg1,len1
+accept num,03
+call convert
+mov [no1],al ;storing converted first no in variable
+disp msg2,len2
+accept num,03
+call convert
+cmp al,00 ; multiplier=0 EX. 3*0
+je m2 ;00 present in al i.e.lower bits of ax 
+mov [no2],al
+mov bx,0000h
+mov [result],bx
+mov bx,[no1]
+m1:
+add [result],bx
+dec byte[no2]
+jnz m1
+disp res,lres ;Result: 
+m2:
+mov ax,[result]
+call display
+disp msg,len ;new line
+jmp menu_label
+add_shift:
+disp msg1,len1
+accept num,03
+call convert
+mov [no1],al
+disp msg2,len2
+accept num,03
+call convert
+mov [no2],al
+disp res,lres
+mov bx,0000h
+mov [res],bx
+mov ax,[no1]
+mov bx,[no2]
+as3:
+shr bx,01
+jnc as1
+add [res],ax
+as1:
+shl ax,01
+cmp ax,00
+jz as2
+cmp bx,00
+jnz as3
+as2:
+mov ax,[res]
+call display
+disp msg,len
+jmp menu_label
+exit:
+mov rax,60
+mov rdi,0
+syscall
+display
+mov rsi, disparr+03
+mov rcx,04
+l4: 
+mov rdx,0
+mov rbx,10h
+div rbx
+cmp dl,09h
+jbe add30
+add dl,07h
+add30: 
+add dl,30h
+mov [rsi],dl
+dec rsi
+dec rcx
+jnz l4
+mov rax,1
+mov rdx,1
+mov rsi,disparr
+mov rdx,04
+syscall
+ret
+convert:
+mov rsi,num
+mov al,[rsi]
+cmp al,39h
+jle a1
+sub al,07h
+a1: 
+sub al,30h
+rol al,04
+mov bl,al
+inc rsi
+mov al,[rsi]
+cmp al,39h ;to get the second number
+jle a2
+sub al,07h
+a2: 
+sub al,30h
+add al,bl
+ret
+section .data
+menu: db "MENU for multiplication: ",10
+db "1. Add and shift method",10
+db "2. Exit",10
+menulen: equ $-menu
+cho: db "Enter your choice: "
+lenc: equ $-cho
+msg: db " ",10
+len: equ $-msg
+msg1: db "Enter 1st number: "
+len1: equ $-msg1
+msg2: db "Enter 2nd number: "
+len2: equ $-msg2
+res: db "Result: "
+lres: equ $-res
+section .bss
+disparr resb 02
+choice resb 02
+num resb 03
+no1 resb 02
+no2 resb 02
+result resb 04
+
+
+////////////////////”””””””””””””10”””””””””””””///////////////
+
+%macro scall 4
+mov rax,%1
+mov rdi,%2
+mov rsi,%3
+mov rdx,%4
+syscall
+%endmacro
+Section .data
+title: db 0x0A,"----Commands -----", 0x0A
+db "1. Copy ",0x0A
+db "2. Type ",0x0A
+db "Enter Your choice", 0x0A
+title_len: equ $-title
+openmsg: db "File Opened Successfully",0x0A
+openmsg_len: equ $-openmsg
+closemsg: db "File Closed Successfully",0x0A
+closemsg_len: equ $-closemsg
+errormsg: db "Failed to open file", 0x0A
+errormsg_len: equ $-errormsg
+delmsg: db "Deleted File", 0x0A
+delmsg_len: equ $-delmsg
+typemsg: db "=-----File Contents ----=",0x0A
+typemsg_len: equ $-typemsg
+;f1name: db 'file1.txt', 0
+;f2name: db 'file2.txt', 0
+;f3name: db 'file3.txt',0
+filenmsg: db "ENter File name: "
+filen_len: equ $-filenmsg
+Section .bss
+buffer: resb 200
+bufferlen:resb 8
+cnt1:resb 8
+fdis:resb 8
+choice: resb 2
+f1name: resb 20
+f2name: resb 20
+f3name: resb 20
+Section .text
+global main
+main:
+scall 1,1,title,title_len
+scall 0,0,choice,2
+;------------- CHOOSE OPTION -------------------------
+;compare choice here
+cmp byte[choice],'1' ;if choice is to display content
+je COPY
+cmp byte[choice],'2'
+je TYPE
+COPY:
+scall 1,1,filenmsg,filen_len
+scall 0,0, f1name, 20
+dec rax
+mov byte[f1name+rax],0
+scall 2,f1name,2,777 ;Opening file
+mov qword[fdis],rax ;RAX contains file descriptor value
+bt rax,63 ;63rd bit is +ve(0) if file is successfull opened else it is -ve (1)
+jc next
+scall 1,1,openmsg,openmsg_len
+jmp next1
+next:
+scall 1,1,errormsg,errormsg_len
+jmp EXIT
+next1:
+scall 0,[fdis],buffer,200 ;reading contents of file in buffer
+;rax contains actual number of bytes read
+mov qword[bufferlen],rax
+mov qword[cnt1],rax 
+;Closing file1
+mov rax,3
+mov rdi,f1name
+syscall
+scall 1,1,closemsg,closemsg_len
+;-------------------FILE 2 -----------------
+scall 1,1,filenmsg,filen_len
+scall 0,0, f2name, 20
+dec rax
+mov byte[f2name+rax],0
+scall 2,f2name,2,777
+mov qword[fdis],rax ;RAX contains file descriptor value
+bt rax,63 ;63rd bit is +ve(0) if file is successfull opened else it is -ve (1)
+jc next3
+scall 1,1,openmsg,openmsg_len
+jmp next21
+next3:
+scall 1,1,errormsg,errormsg_len
+jmp EXIT
+next21:
+scall 1,qword[fdis],buffer,qword[bufferlen] ;writing to file2.txt
+mov rax,3
+mov rdi,f2name
+syscall
+scall 1,1,closemsg,closemsg_len
+jmp main
+TYPE:scall 1,1,filenmsg,filen_len
+scall 0,0, f2name, 20
+dec rax
+mov byte[f2name+rax],0
+scall 2,f2name,2,777 ;Opening file
+mov qword[fdis],rax ;RAX contains file descriptor value
+bt rax,63 ;63rd bit is +ve(0) if file is successfull opened else it is -ve (1)
+jc tnext
+scall 1,1,openmsg,openmsg_len
+jmp tnext1
+tnext:
+scall 1,1,errormsg,errormsg_len
+jmp EXIT
+tnext1:
+scall 0,[fdis],buffer,200 ;reading contents of file in buffer
+mov qword[bufferlen],rax
+scall 1,1, typemsg,typemsg_len
+scall 1,1, buffer,qword[bufferlen]
+;Closing file2
+mov rax,3
+mov rdi,f2name
+syscall
+scall 1,1,closemsg,closemsg_len
+JMP main
+EXIT:
+mov rax,60
+mov rdi,0
+syscall
+
+////////////”””””””””””””11’’’’’’’’’’’’’’’’’’’’’’/////////////
+
+
+section .data
+msg1 db "Factorial of a given number is:"
+len1 equ $-msg1
+msg2 db "given number is:"
+len2 equ $-msg2
+msg0 db "Factorial of a given number is :1",10
+len0 equ $-msg0
+msg3 db "Error",10
+len3 equ $-msg3
+newline db 10
+factorial dd 1
+section .bss
+final resb 8
+result resb 4
+counter resb 4
+num resb 4
+numh resb 4
+numlen resb 4
+; macro to write
+%macro print 2
+mov eax,4
+mov ebx,1
+mov ecx,%1
+mov edx,%2
+int 0x80
+%endmacro
+;macro to read
+%macro read 2
+mov eax,3
+mov ebx,0
+mov ecx,%1
+mov edx,%2
+int 0x80
+%endmacro
+section .text
+global _start
+_start:
+xor eax,eax
+mov dword[num],eax
+print msg2,len2
+pop ecx
+pop ecx
+pop ecx
+mov edx,00
+up:
+cmp byte[ecx+edx],0
+jz l1
+inc edx
+jmp up
+l1:
+mov esi,ecx
+mov eax,dword[esi]
+mov dword[num],eax
+mov dword[numlen],edx
+print num,dword[numlen]
+print newline,1
+mov esi,num
+call packnum
+mov dword[numh],ebx
+cmp dword[numh],0
+jne next2
+print msg0,len0
+jmp exit
+next2:
+mov ecx,dword[numh]
+call facto
+mov edx,dword[factorial]
+mov dword[result],edx
+call ascii
+print msg1,len1
+print final,8
+print newline,1
+exit:
+mov eax,1
+mov ebx,0
+int 0x80
+packnum:
+mov eax,0
+mov ecx,dword[numlen]
+mov dword[counter],ecx
+mov ebx,0
+back:
+mov al,[esi]
+rol ebx,4
+cmp al,39H
+jbe next
+sub al,07H
+next:
+sub al,30H
+or bl,al
+inc esi
+dec dword[counter]
+jnz back
+ret
+ascii:
+mov esi,final
+mov dword[counter],8
+mov eax,dword[result]
+bck2:
+mov ebx,eax
+rol ebx,04
+mov eax,ebx
+and bl,0FH
+cmp bl,09H
+jbe next1
+add bl,07H
+next1:
+add bl,30H
+mov [esi],ebx
+inc esi
+dec dword[counter]
+jnz bck2
+ret
+facto:
+push ecx
+cmp ecx,01
+jne next3
+jmp exit1
+next3: 
+dec ecx
+call facto
+exit1:
+pop ecx
+mov eax,ecx
+mul dword[factorial]
+mov dword[factorial],eax
+ret
